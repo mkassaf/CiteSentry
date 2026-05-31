@@ -1,0 +1,12 @@
+[1] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,
+    L. Kaiser, and I. Polosukhin, "Attention is all you need," in Advances in
+    Neu-
+    ral Information Processing Systems, 2017, pp. 5998-6008.
+
+[2] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova, "BERT: Pre-training of
+    deep bidirectional transform-
+    ers for language understanding," in Proceedings of NAACL-HLT, 2019, pp.
+    4171-4186.
+
+[3] Y. LeCun, Y. Bengio, and G. Hinton, "Deep learn-
+    ing," Nature, vol. 521, pp. 436-444, 2015.

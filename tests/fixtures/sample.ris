@@ -1,0 +1,20 @@
+TY  - JOUR
+AU  - Vaswani, Ashish
+AU  - Shazeer, Noam
+AU  - Parmar, Niki
+TI  - Attention is all you need
+JO  - Advances in Neural Information Processing Systems
+PY  - 2017
+DO  - 10.48550/arXiv.1706.03762
+ER  -
+
+TY  - JOUR
+AU  - Devlin, Jacob
+AU  - Chang, Ming-Wei
+AU  - Lee, Kenton
+AU  - Toutanova, Kristina
+TI  - BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
+JO  - Proceedings of NAACL-HLT 2019
+PY  - 2019
+DO  - 10.18653/v1/N19-1423
+ER  -

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(pip index *)",
+      "Bash(python *)",
+      "Bash(refsift check-one *)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d['overall_verdict'], d['reference']['title']\\)\")",
+      "Bash(refsift check *)",
+      "Bash(python3 *)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "semantic-scholar-mcp"
+  ]
+}
