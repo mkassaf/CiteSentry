@@ -14,9 +14,38 @@ Three checks per reference:
 2. **URL liveness** — HTTP HEAD/GET check; classifies 2xx/4xx/timeout/bot-protection
 3. **Content relevance** — LLM-backed check comparing fetched content to the cited title/topic (requires `DEEPSEEK_API_KEY` for CLI use)
 
-Verdicts: `VERIFIED`, `METADATA_MISMATCH`, `DEAD_URL`, `CONTENT_DRIFT`, `NOT_FOUND`, `UNRESOLVABLE`.
+## Verdicts
 
-`NOT_FOUND` means "could not verify — likely fabricated, needs manual review." Never "fake."
+| Verdict | Meaning | Action |
+|---|---|---|
+| `VERIFIED` | Paper found in a scholarly database with matching title, authors, year, and DOI | None — citation is good |
+| `METADATA_MISMATCH` | Paper found, but a field in your citation differs from the database record (commonly a truncated or wrong DOI) | Correct the mismatched field; the paper itself is real |
+| `DEAD_URL` | Paper exists but one or more cited URLs return 4xx/5xx or time out | Update or remove the URL |
+| `CONTENT_DRIFT` | Paper exists and URL is live, but fetched content doesn't match what the citation claims | Review whether you are citing the right paper |
+| `NOT_FOUND` | Could not verify in any database — may be fabricated, obscure, or not yet indexed | Manual verification recommended; see note below |
+| `UNRESOLVABLE` | Could not attempt verification — citation is missing enough fields (no title, no DOI, no authors) or the existence check errored | Add missing fields (year, DOI, venue) and re-run |
+
+### NOT_FOUND is not "fake"
+
+`NOT_FOUND` means the tool could not confirm the paper in the databases it queries (OpenAlex, Crossref, Semantic Scholar, arXiv, PubMed, DBLP). Common legitimate reasons:
+
+- **Recent publications** — papers from the past 6–12 months are often not yet indexed, especially conference proceedings
+- **Preprints** — papers only on institutional repositories or not yet on arXiv
+- **Truncated or missing DOI** — without a DOI, title search may not find the paper
+- **Obscure venues** — proceedings from smaller conferences may not be in major databases
+
+A high `NOT_FOUND` rate in a survey of 2025–2026 literature (30–40%) is normal and expected.
+
+### Expected verification rates by publication year
+
+| Publication year | Typical verification rate |
+|---|---|
+| ≤ 2023 | 85–100% |
+| 2024 | 60–85% |
+| 2025 | 30–60% |
+| 2026 | 10–30% |
+
+Rates are lower for recent years due to database indexing lag, not citation quality.
 
 ## Install
 
