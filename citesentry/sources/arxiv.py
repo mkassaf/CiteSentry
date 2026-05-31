@@ -75,6 +75,10 @@ class ArXivAdapter(SourceAdapter):
             await self._client.aclose()
 
     async def lookup_doi(self, doi: str) -> Candidate | None:
+        # Handle arXiv-issued DOIs: 10.48550/arXiv.XXXX.XXXXX
+        m = re.search(r"10\.48550/arXiv\.(\d+\.\d+)", doi, re.IGNORECASE)
+        if m:
+            return await self.lookup_arxiv_id(m.group(1))
         return None
 
     async def lookup_arxiv_id(self, arxiv_id: str) -> Candidate | None:
