@@ -65,6 +65,10 @@ pip install -e ".[dev]"
 ## CLI usage
 
 ```bash
+# Check a PDF paper — extracts and verifies the references section automatically
+citesentry check paper.pdf --no-llm
+citesentry check paper.pdf --no-llm --format md > report.md
+
 # Check a BibTeX file
 citesentry check refs.bib
 
@@ -95,6 +99,15 @@ citesentry check refs.txt --style ieee
 ```
 
 Exit code is non-zero if any reference is `NOT_FOUND` or `DEAD_URL` (useful in CI).
+
+### PDF input — known limitation
+
+pdfminer.six works well for single-column PDFs. **Two-column papers** (most IEEE/ACM conference papers) often produce jumbled text when columns are mixed, which breaks reference parsing. If you see very few references parsed or garbled titles, extract the references section manually first:
+
+```bash
+# Copy-paste the references section into a text file, then:
+citesentry check refs.txt --no-llm
+```
 
 ## MCP server (Claude Desktop / Claude Code)
 
@@ -196,6 +209,20 @@ asyncio.run(main())
 - DOI list (`.txt` with one DOI per line)
 - Plaintext reference sections — IEEE, APA, Vancouver, MLA, Chicago; auto-detected
 - PDF (`.pdf`) — extracts reference section text via pdfminer.six
+
+## Reference enrichment
+
+When a citation is incomplete (missing year, DOI, or venue) but the tool finds a matching paper in a database, the result includes an `enriched` field with the complete metadata sourced from the database. This is visible in JSON output:
+
+```json
+{
+  "overall_verdict": "VERIFIED",
+  "reference": { "title": "SOEN-101: ...", "year": null, "doi": null },
+  "enriched":  { "title": "SOEN-101: ...", "year": 2025, "doi": "10.1109/ICSE55347.2025.00638", "venue": "ICSE" }
+}
+```
+
+Use this to correct incomplete citations in your bibliography without manual searching.
 
 ## Caching
 

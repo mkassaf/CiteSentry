@@ -10,7 +10,9 @@
       "Bash(python3 *)",
       "Bash(xargs sed -i '' 's/from refsift\\\\./from citesentry./g; s/from refsift import/from citesentry import/g; s/import refsift\\\\./import citesentry./g')",
       "Bash(sed -i '' 's/version = \"0.2.0\"/version = \"0.2.1\"/' /Users/assaf/phd/ai-projects/CiteSentry/pyproject.toml)",
-      "Bash(sed -i '' 's/__version__ = \"0.2.0\"/__version__ = \"0.2.1\"/' /Users/assaf/phd/ai-projects/CiteSentry/citesentry/__init__.py)"
+      "Bash(sed -i '' 's/__version__ = \"0.2.0\"/__version__ = \"0.2.1\"/' /Users/assaf/phd/ai-projects/CiteSentry/citesentry/__init__.py)",
+      "Bash(sed -i '' 's/version = \"0\\\\.2\\\\.[0-9]\"/version = \"0.2.5\"/' /Users/assaf/phd/ai-projects/CiteSentry/pyproject.toml)",
+      "Bash(sed -i '' 's/__version__ = \"0\\\\.2\\\\.[0-9]\"/__version__ = \"0.2.5\"/' /Users/assaf/phd/ai-projects/CiteSentry/citesentry/__init__.py)"
     ]
   },
   "enableAllProjectMcpServers": true,
