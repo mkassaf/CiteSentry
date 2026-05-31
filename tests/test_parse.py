@@ -4,14 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from refsift.models import Reference
-from refsift.parse.bibtex import parse_bibtex
-from refsift.parse.ris import parse_ris
-from refsift.parse.csl_json import parse_csl_json
-from refsift.parse.nbib import parse_nbib
-from refsift.parse.doi_list import parse_doi_list
-from refsift.parse.plaintext import split, detect_style, extract_fields, Style, parse_plaintext
-from refsift.parse.detect import auto_parse
+from citesentry.models import Reference
+from citesentry.parse.bibtex import parse_bibtex
+from citesentry.parse.ris import parse_ris
+from citesentry.parse.csl_json import parse_csl_json
+from citesentry.parse.nbib import parse_nbib
+from citesentry.parse.doi_list import parse_doi_list
+from citesentry.parse.plaintext import split, detect_style, extract_fields, Style, parse_plaintext
+from citesentry.parse.detect import auto_parse
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

@@ -1,11 +1,11 @@
-# refsift — Claude Code session notes
+# citesentry — Claude Code session notes
 
 ## Guardrails (non-negotiable)
 
 - Never label a reference "fake" or "fraudulent" — only "could not verify / needs review."
 - Never bypass CAPTCHA or bot-protection; classify as SKIPPED.
 - Never hardcode API keys; read from env; degrade gracefully when absent.
-- Core (`refsift/core/`, `refsift/checks/`, `refsift/sources/`, `refsift/parse/`) must never import Typer, Rich, or MCP.
+- Core (`citesentry/core/`, `citesentry/checks/`, `citesentry/sources/`, `citesentry/parse/`) must never import Typer, Rich, or MCP.
 - MCP server stdout must stay clean (JSON-RPC stream). Log to stderr only.
 - Always send `mailto` to OpenAlex/Crossref; respect rate limits; cache aggressively.
 - Report all counts honestly: checked, skipped, errored — never silently drop.
@@ -13,12 +13,12 @@
 ## Architecture
 
 ```
-                 ┌─────────────────────────┐
-   bib/pdf/txt → │   refsift.core (library) │ → VerificationReport (pydantic)
-                 └─────────────────────────┘
+                 ┌──────────────────────────────┐
+   bib/pdf/txt → │   citesentry.core (library)  │ → VerificationReport (pydantic)
+                 └──────────────────────────────┘
                       ▲                  ▲
                       │                  │
-              refsift.cli         refsift.mcp_server
+              citesentry.cli     citesentry.mcp_server
             (Typer + Rich)         (FastMCP / stdio)
 ```
 

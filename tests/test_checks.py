@@ -4,10 +4,10 @@ import pytest
 import respx
 import httpx
 
-from refsift.models import CheckStatus, Reference
-from refsift.checks.url_liveness import check_url_liveness
-from refsift.checks.existence import check_existence
-from refsift.sources.openalex import OpenAlexAdapter
+from citesentry.models import CheckStatus, Reference
+from citesentry.checks.url_liveness import check_url_liveness
+from citesentry.checks.existence import check_existence
+from citesentry.sources.openalex import OpenAlexAdapter
 
 _OPENALEX_WORK = {
     "id": "https://openalex.org/W2964232343",

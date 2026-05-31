@@ -1,8 +1,8 @@
-# refsift
+# CiteSentry
 
-[![PyPI](https://img.shields.io/pypi/v/refsift)](https://pypi.org/project/refsift/)
-[![Python](https://img.shields.io/pypi/pyversions/refsift)](https://pypi.org/project/refsift/)
-[![CI](https://github.com/mkassaf/refsift/actions/workflows/publish.yml/badge.svg)](https://github.com/mkassaf/refsift/actions/workflows/publish.yml)
+[![PyPI](https://img.shields.io/pypi/v/citesentry)](https://pypi.org/project/citesentry/)
+[![Python](https://img.shields.io/pypi/pyversions/citesentry)](https://pypi.org/project/citesentry/)
+[![CI](https://github.com/mkassaf/CiteSentry/actions/workflows/publish.yml/badge.svg)](https://github.com/mkassaf/CiteSentry/actions/workflows/publish.yml)
 
 Citation verification tool: check whether references actually exist, whether their URLs are live, and whether the content is relevant to the citation.
 
@@ -21,15 +21,15 @@ Verdicts: `VERIFIED`, `METADATA_MISMATCH`, `DEAD_URL`, `CONTENT_DRIFT`, `NOT_FOU
 ## Install
 
 ```bash
-pip install refsift                 # basic install
-pip install "refsift[cli-llm]"      # + DeepSeek for relevance checks
+pip install citesentry                 # basic install
+pip install "citesentry[cli-llm]"      # + DeepSeek for relevance checks
 ```
 
 For development:
 
 ```bash
-git clone https://github.com/mkassaf/refsift
-cd refsift
+git clone https://github.com/mkassaf/CiteSentry
+cd CiteSentry
 pip install -e ".[dev]"
 ```
 
@@ -37,32 +37,32 @@ pip install -e ".[dev]"
 
 ```bash
 # Check a BibTeX file
-refsift check refs.bib
+citesentry check refs.bib
 
 # Check a RIS/CSL-JSON/NBIB/plaintext file
-refsift check refs.ris
-refsift check refs.json
+citesentry check refs.ris
+citesentry check refs.json
 
 # Read from stdin
-cat refs.txt | refsift check -
+cat refs.txt | citesentry check -
 
 # Single ad-hoc reference
-refsift check-one "Vaswani et al. (2017). Attention is all you need. NeurIPS."
+citesentry check-one "Vaswani et al. (2017). Attention is all you need. NeurIPS."
 
 # Output formats: table (default), json, md
-refsift check refs.bib --format json
-refsift check refs.bib --format md > report.md
+citesentry check refs.bib --format json
+citesentry check refs.bib --format md > report.md
 
 # Skip checks
-refsift check refs.bib --no-llm       # skip relevance (no API key needed)
-refsift check refs.bib --no-url       # skip URL liveness
+citesentry check refs.bib --no-llm       # skip relevance (no API key needed)
+citesentry check refs.bib --no-url       # skip URL liveness
 
 # Domain adapters (auto by default)
-refsift check refs.bib --domain pubmed   # force PubMed only
-refsift check refs.bib --domain none     # disable domain adapters
+citesentry check refs.bib --domain pubmed   # force PubMed only
+citesentry check refs.bib --domain none     # disable domain adapters
 
 # Override plaintext style detection
-refsift check refs.txt --style ieee
+citesentry check refs.txt --style ieee
 ```
 
 Exit code is non-zero if any reference is `NOT_FOUND` or `DEAD_URL` (useful in CI).
@@ -74,10 +74,10 @@ Add to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "refsift": {
-      "command": "refsift-mcp",
+    "citesentry": {
+      "command": "citesentry-mcp",
       "env": {
-        "REFSIFT_MAILTO": "you@example.com",
+        "CITESENTRY_MAILTO": "you@example.com",
         "DEEPSEEK_API_KEY": "sk-..."
       }
     }
@@ -90,10 +90,10 @@ Or with `uvx` (no prior install needed):
 ```json
 {
   "mcpServers": {
-    "refsift": {
+    "citesentry": {
       "command": "uvx",
-      "args": ["--from", "refsift", "refsift-mcp"],
-      "env": { "REFSIFT_MAILTO": "you@example.com" }
+      "args": ["--from", "citesentry", "citesentry-mcp"],
+      "env": { "CITESENTRY_MAILTO": "you@example.com" }
     }
   }
 }
@@ -109,14 +109,14 @@ MCP tools exposed:
 Register the server once:
 
 ```bash
-claude mcp add refsift \
-  -e REFSIFT_MAILTO=you@example.com \
-  -- uvx --from refsift refsift-mcp
+claude mcp add citesentry \
+  -e CITESENTRY_MAILTO=you@example.com \
+  -- uvx --from citesentry citesentry-mcp
 ```
 
 Then in any Claude Code session, ask naturally:
 
-> "Use refsift to verify this reference: Vaswani et al. (2017). Attention is all you need. NeurIPS."
+> "Use citesentry to verify this reference: Vaswani et al. (2017). Attention is all you need. NeurIPS."
 
 > "Check whether all the references in refs.bib are real."
 
@@ -131,8 +131,8 @@ from mcp.client.stdio import stdio_client
 
 server = StdioServerParameters(
     command="uvx",
-    args=["--from", "refsift", "refsift-mcp"],
-    env={"REFSIFT_MAILTO": "you@example.com"},
+    args=["--from", "citesentry", "citesentry-mcp"],
+    env={"CITESENTRY_MAILTO": "you@example.com"},
 )
 
 async def main():
@@ -153,7 +153,7 @@ asyncio.run(main())
 
 | Variable | Default | Description |
 |---|---|---|
-| `REFSIFT_MAILTO` | `refsift@example.com` | Polite email for OpenAlex/Crossref API |
+| `CITESENTRY_MAILTO` | `citesentry@example.com` | Polite email for OpenAlex/Crossref API |
 | `DEEPSEEK_API_KEY` | — | Required for relevance checks in CLI |
 | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI-compatible endpoint |
 | `DEEPSEEK_MODEL` | `deepseek-chat` | Model for relevance judgments |
@@ -170,4 +170,4 @@ asyncio.run(main())
 
 ## Caching
 
-Results are cached in a SQLite database (`~/.cache/refsift/cache.db`). Pass `--no-cache` to bypass.
+Results are cached in a SQLite database (`~/.cache/citesentry/cache.db`). Pass `--no-cache` to bypass.

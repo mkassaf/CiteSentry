@@ -5,10 +5,10 @@ import pytest
 import respx
 import httpx
 
-from refsift.models import Reference
-from refsift.sources.openalex import OpenAlexAdapter
-from refsift.sources.crossref import CrossrefAdapter
-from refsift.sources.semantic_scholar import SemanticScholarAdapter
+from citesentry.models import Reference
+from citesentry.sources.openalex import OpenAlexAdapter
+from citesentry.sources.crossref import CrossrefAdapter
+from citesentry.sources.semantic_scholar import SemanticScholarAdapter
 
 
 _OPENALEX_WORK = {

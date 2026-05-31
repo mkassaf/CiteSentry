@@ -4,10 +4,10 @@ import pytest
 import respx
 import httpx
 
-from refsift.models import Reference, Verdict, CheckStatus
-from refsift.core.engine import verify_one, verify_many
-from refsift.core.cascade import VerifyOptions
-from refsift.sources.openalex import OpenAlexAdapter
+from citesentry.models import Reference, Verdict, CheckStatus
+from citesentry.core.engine import verify_one, verify_many
+from citesentry.core.cascade import VerifyOptions
+from citesentry.sources.openalex import OpenAlexAdapter
 
 _OPENALEX_WORK = {
     "id": "https://openalex.org/W2964232343",

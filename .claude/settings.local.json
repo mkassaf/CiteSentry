@@ -7,7 +7,8 @@
       "Bash(refsift check-one *)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d['overall_verdict'], d['reference']['title']\\)\")",
       "Bash(refsift check *)",
-      "Bash(python3 *)"
+      "Bash(python3 *)",
+      "Bash(xargs sed -i '' 's/from refsift\\\\./from citesentry./g; s/from refsift import/from citesentry import/g; s/import refsift\\\\./import citesentry./g')"
     ]
   },
   "enableAllProjectMcpServers": true,
