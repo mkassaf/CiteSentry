@@ -1,5 +1,9 @@
 # refsift
 
+[![PyPI](https://img.shields.io/pypi/v/refsift)](https://pypi.org/project/refsift/)
+[![Python](https://img.shields.io/pypi/pyversions/refsift)](https://pypi.org/project/refsift/)
+[![CI](https://github.com/mkassaf/refsift/actions/workflows/publish.yml/badge.svg)](https://github.com/mkassaf/refsift/actions/workflows/publish.yml)
+
 Citation verification tool: check whether references actually exist, whether their URLs are live, and whether the content is relevant to the citation.
 
 ## What it does
@@ -17,9 +21,16 @@ Verdicts: `VERIFIED`, `METADATA_MISMATCH`, `DEAD_URL`, `CONTENT_DRIFT`, `NOT_FOU
 ## Install
 
 ```bash
-pip install -e .                    # basic install
-pip install -e ".[cli-llm]"         # + DeepSeek for relevance checks
-pip install -e ".[dev]"             # + dev tools
+pip install refsift                 # basic install
+pip install "refsift[cli-llm]"      # + DeepSeek for relevance checks
+```
+
+For development:
+
+```bash
+git clone https://github.com/mkassaf/refsift
+cd refsift
+pip install -e ".[dev]"
 ```
 
 ## CLI usage
@@ -74,14 +85,14 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-Or with `uvx` if installed via PyPI:
+Or with `uvx` (no prior install needed):
 
 ```json
 {
   "mcpServers": {
     "refsift": {
       "command": "uvx",
-      "args": ["refsift-mcp"],
+      "args": ["--from", "refsift", "refsift-mcp"],
       "env": { "REFSIFT_MAILTO": "you@example.com" }
     }
   }
