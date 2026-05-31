@@ -11,12 +11,26 @@ from citesentry.sources.base import SourceAdapter
 _BASE = "https://dblp.org/search/publ/api"
 
 _CS_PATTERNS = [
+    # ML / AI
     "neurips", "nips", "icml", "cvpr", "iccv", "eccv", "acl", "emnlp", "naacl",
-    "iclr", "vldb", "sigmod", "sigkdd", "kdd", "icde", "www", "iswc",
-    "aaai", "ijcai", "uai", "aistats", "sosp", "osdi", "eurosys", "nsdi",
-    "pldi", "popl", "oopsla", "asplos", "isca", "micro", "hpca",
-    "ieee transactions", "acm transactions", "journal of machine learning",
-    "journal of artificial intelligence", "artificial intelligence",
+    "iclr", "aaai", "ijcai", "uai", "aistats",
+    # Data / DB
+    "vldb", "sigmod", "sigkdd", "kdd", "icde", "www", "iswc",
+    # Systems
+    "sosp", "osdi", "eurosys", "nsdi", "pldi", "popl", "oopsla", "asplos",
+    "isca", "micro", "hpca",
+    # Software engineering conferences
+    "icse", "fse", "esec", "ase", "icsme", "icsm", "msr", "issta", "saner",
+    "icsa", "ecsa", "icpc", "re ", "models", "caise", "ease", "promise",
+    "forge", "satrends", "sat ", "aiware", "aixse", "conisoft", "iccca",
+    "southeast", "southeastcon", "mrai", "iciip", "acai", "cain",
+    # SE journals
+    "tosem", "tse", "emse", "ist ", "information and software technology",
+    "journal of systems and software", "software: practice",
+    # General IEEE/ACM CS
+    "ieee transactions", "ieee access", "acm transactions",
+    "journal of machine learning", "journal of artificial intelligence",
+    "artificial intelligence",
 ]
 
 

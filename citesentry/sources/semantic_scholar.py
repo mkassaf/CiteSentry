@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import urllib.parse
 
 import httpx
 
@@ -54,6 +55,19 @@ class SemanticScholarAdapter(SourceAdapter):
             r = await client.get(url, params={"fields": _FIELDS})
             if r.status_code == 200:
                 return _paper_to_candidate(r.json())
+        except httpx.HTTPError:
+            pass
+        return None
+
+    async def lookup_url(self, url: str) -> Candidate | None:
+        client = await self._get_client()
+        encoded = urllib.parse.quote(url, safe="")
+        try:
+            r = await client.get(f"{_BASE}/paper/URL:{encoded}", params={"fields": _FIELDS})
+            if r.status_code == 200:
+                data = r.json()
+                if data.get("title"):
+                    return _paper_to_candidate(data)
         except httpx.HTTPError:
             pass
         return None

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import time
 from typing import Any
 
@@ -10,6 +11,7 @@ from citesentry.sources.base import SourceAdapter
 
 _TITLE_PASS_THRESHOLD = 85.0
 _TITLE_WARN_THRESHOLD = 70.0
+_DOI_IN_URL = re.compile(r'\b(10\.\d{4,}/[^\s"<>\]{}\\^`|]+)')
 
 
 def _surname(name: str) -> str:
@@ -121,10 +123,20 @@ async def check_existence(
                     cost=CheckCost(api_calls=0, elapsed_ms=elapsed),
                 )
 
-    if ref.doi:
+    # Extract DOI from URLs if not already present (e.g. https://journal.org/10.1234/xyz)
+    effective_doi = ref.doi
+    if not effective_doi and ref.urls:
+        for url in ref.urls:
+            m = _DOI_IN_URL.search(url)
+            if m:
+                effective_doi = m.group(1).rstrip(".,;)")
+                evidence["doi_extracted_from_url"] = effective_doi
+                break
+
+    if effective_doi:
         for src in sources:
             try:
-                cand = await src.lookup_doi(ref.doi)
+                cand = await src.lookup_doi(effective_doi)
                 api_calls += 1
                 if cand:
                     score, ev = _score_candidate(ref, cand)
@@ -146,8 +158,8 @@ async def check_existence(
     if not candidates and domain_sources:
         for src in domain_sources:
             try:
-                if ref.doi:
-                    cand = await src.lookup_doi(ref.doi)
+                if effective_doi:
+                    cand = await src.lookup_doi(effective_doi)
                     api_calls += 1
                     if cand:
                         score, ev = _score_candidate(ref, cand)
@@ -159,6 +171,21 @@ async def check_existence(
                     candidates.append((score, {**ev, "source": src.name, "via": "search"}, cand))
             except Exception as e:
                 evidence[f"{src.name}_error"] = str(e)
+
+    # Final fallback: resolve landing-page URLs via sources that support it (e.g. Semantic Scholar)
+    if not candidates and ref.urls:
+        for src in sources:
+            for url in ref.urls:
+                try:
+                    cand = await src.lookup_url(url)
+                    api_calls += 1
+                    if cand:
+                        score, ev = _score_candidate(ref, cand)
+                        candidates.append((score, {**ev, "source": src.name, "via": "url_lookup"}, cand))
+                except Exception as e:
+                    evidence[f"{src.name}_url_error"] = str(e)
+            if candidates:
+                break
 
     elapsed = (time.monotonic() - start) * 1000
 

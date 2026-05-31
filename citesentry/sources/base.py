@@ -17,3 +17,7 @@ class SourceAdapter(ABC):
     async def search(self, ref: Reference) -> list[Candidate]:
         """Search by title/author/year; return ranked candidates."""
         ...
+
+    async def lookup_url(self, url: str) -> Candidate | None:
+        """Resolve a landing-page URL to a candidate record. Optional."""
+        return None
