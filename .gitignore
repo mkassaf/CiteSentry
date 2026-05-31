@@ -1,1 +1,41 @@
+# Environment
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Data (PDFs and results can be large / sensitive)
+data/papers/
+data/results/
+data/ground_truth/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# LangSmith / LangChain
+.langchain.db
+.claude/
+.specstory/
+.specstory/statistics.json
 .claude/settings.local.json
+.specstory/history/
+.claude/settings.local.json
+.claude/settings.local.json
+.claude/settings.local.json
+.specstory/statistics.json
