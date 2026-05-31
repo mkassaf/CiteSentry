@@ -104,6 +104,51 @@ MCP tools exposed:
 - `verify_reference_list(references, format, check_url, check_relevance)` — batch
 - `check_url_alive(url)` — standalone URL check
 
+### Claude Code (CLI)
+
+Register the server once:
+
+```bash
+claude mcp add refsift \
+  -e REFSIFT_MAILTO=you@example.com \
+  -- uvx --from refsift refsift-mcp
+```
+
+Then in any Claude Code session, ask naturally:
+
+> "Use refsift to verify this reference: Vaswani et al. (2017). Attention is all you need. NeurIPS."
+
+> "Check whether all the references in refs.bib are real."
+
+> "Is https://arxiv.org/abs/1706.03762 still live?"
+
+### Any MCP-compatible agent (Python example)
+
+```python
+import asyncio
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+server = StdioServerParameters(
+    command="uvx",
+    args=["--from", "refsift", "refsift-mcp"],
+    env={"REFSIFT_MAILTO": "you@example.com"},
+)
+
+async def main():
+    async with stdio_client(server) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            result = await session.call_tool(
+                "verify_reference",
+                {"reference": "Vaswani et al. (2017). Attention is all you need. NeurIPS."},
+            )
+            print(result.content[0].text)
+
+asyncio.run(main())
+```
+
 ## Environment variables
 
 | Variable | Default | Description |
