@@ -74,6 +74,7 @@ class VerificationReport(BaseModel):
     checks: list[CheckResult] = Field(default_factory=list)
     overall_verdict: Verdict = Verdict.UNRESOLVABLE
     notes: list[str] = Field(default_factory=list)
+    enriched: Reference | None = None  # database-sourced metadata when citation was incomplete
 
     def verdict_display(self) -> str:
         if self.overall_verdict == Verdict.NOT_FOUND:

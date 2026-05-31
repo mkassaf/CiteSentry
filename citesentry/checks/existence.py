@@ -203,6 +203,10 @@ async def check_existence(
         evidence.update(best_ev)
         evidence["best_candidate_title"] = best_cand.title
         evidence["best_candidate_source"] = best_cand.source
+        evidence["best_candidate_year"] = best_cand.year
+        evidence["best_candidate_doi"] = best_cand.doi
+        evidence["best_candidate_venue"] = best_cand.venue
+        evidence["best_candidate_authors"] = best_cand.authors
         evidence["total_candidates"] = len(candidates)
 
         title_score = best_ev.get("title_score", 0.0)

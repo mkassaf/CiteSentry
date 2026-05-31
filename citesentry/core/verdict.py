@@ -13,7 +13,7 @@ def compute_verdict(ref: Reference, checks: list[CheckResult]) -> tuple[Verdict,
     url_liveness = by_name.get("url_liveness")
     relevance = by_name.get("relevance")
 
-    if not ref.title and not ref.doi and not ref.authors:
+    if not ref.title and not ref.doi and not ref.authors and not ref.arxiv_id:
         return Verdict.UNRESOLVABLE, ["Reference could not be parsed into checkable fields."]
 
     if existence is None or existence.status == CheckStatus.ERROR:

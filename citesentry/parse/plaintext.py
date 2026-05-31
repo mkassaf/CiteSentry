@@ -225,8 +225,10 @@ def _extract_ieee(chunk: str) -> tuple[str | None, list[str]]:
 
 
 def _extract_apa(chunk: str) -> tuple[str | None, list[str]]:
+    # Match both (2025) and (n.d.) year tokens
+    _year_tok = r"(?:\d{4}|n\.d\.)"
     m = re.match(
-        r"^((?:[A-Z][a-zA-ZÀ-ÿ\-\.']+,?\s+[A-Z]\.?,?\s*(?:&\s*)?)+)\s*\(\d{4}\)\.\s*([^.]+\.)",
+        rf"^((?:[A-Z][a-zA-ZÀ-ÿ\-\.']+,?\s+[A-Z]\.?,?\s*(?:&\s*)?)+)\s*\({_year_tok}\)\.\s*([^.]+\.)",
         chunk,
     )
     if m:
@@ -234,7 +236,7 @@ def _extract_apa(chunk: str) -> tuple[str | None, list[str]]:
         title = m.group(2).strip().rstrip(".")
         return title, authors
 
-    title_m = re.search(r"\(\d{4}\)\.\s+([^.]+)\.", chunk)
+    title_m = re.search(rf"\({_year_tok}\)\.\s+([^.]+)\.", chunk)
     title = title_m.group(1) if title_m else None
     return title, []
 

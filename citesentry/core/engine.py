@@ -13,6 +13,27 @@ from citesentry.sources.domain.dblp import DBLPAdapter, is_cs
 from citesentry.sources.domain.pubmed import PubMedAdapter, is_biomedical
 
 
+def _build_enriched(ref: Reference, existence_evidence: dict) -> Reference | None:
+    """Return a Reference with database-sourced fields when the original citation was incomplete."""
+    missing = not ref.year or not ref.doi or not ref.venue
+    if not missing:
+        return None
+    year = existence_evidence.get("best_candidate_year")
+    doi = existence_evidence.get("best_candidate_doi")
+    venue = existence_evidence.get("best_candidate_venue")
+    authors = existence_evidence.get("best_candidate_authors")
+    title = existence_evidence.get("best_candidate_title")
+    if not any([year, doi, venue]):
+        return None
+    return ref.model_copy(update={
+        "year": ref.year or year,
+        "doi": ref.doi or doi,
+        "venue": ref.venue or venue,
+        "authors": ref.authors or (authors or []),
+        "title": ref.title or title,
+    })
+
+
 def _build_domain_sources(ref: Reference, opts: VerifyOptions) -> list:
     if opts.domain_sources:
         return opts.domain_sources
@@ -72,11 +93,13 @@ async def verify_one(ref: Reference, opts: VerifyOptions) -> VerificationReport:
         checks.append(rel_result)
 
     verdict, notes = compute_verdict(ref, checks)
+    enriched = _build_enriched(ref, existence.evidence) if existence.evidence else None
     return VerificationReport(
         reference=ref,
         checks=checks,
         overall_verdict=verdict,
         notes=notes,
+        enriched=enriched,
     )
 
 
