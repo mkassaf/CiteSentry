@@ -297,11 +297,12 @@ def _extract_lncs(chunk: str) -> tuple[str | None, list[str], str | None]:
         raw_title = rest.split('. ')[0].strip() or None
         venue = None
 
-    # Clean up title artifacts left by pdfminer
+    # Clean up title artifacts: strip URLs first so the trailing-year pattern
+    # then sees "(2024)" at the end (e.g. "Title (2024), https://..." → "Title")
     title = raw_title
     if title:
-        title = re.sub(r'\s*\(\d{4}\),?\s*$', '', title).strip()  # trailing "(2025)"
-        title = re.sub(r',?\s*https?://\S+', '', title).strip()    # trailing/embedded URLs
+        title = re.sub(r',?\s*https?://\S+', '', title).strip()    # URLs first
+        title = re.sub(r'\s*\(\d{4}\),?\s*$', '', title).strip()  # then trailing "(YYYY)"
         title = title.rstrip('.,').strip() or None
 
     return title, authors, venue

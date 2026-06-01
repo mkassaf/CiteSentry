@@ -152,6 +152,20 @@ async def check_existence(
             except Exception as e:
                 evidence[f"{src.name}_error"] = str(e)
 
+    # ArXiv ID direct lookup via Semantic Scholar (avoids export.arxiv.org which may be blocked)
+    if not candidates and ref.arxiv_id:
+        for src in sources:
+            if not hasattr(src, "lookup_arxiv_id"):
+                continue
+            try:
+                cand = await src.lookup_arxiv_id(ref.arxiv_id)
+                api_calls += 1
+                if cand:
+                    score, ev = _score_candidate(ref, cand)
+                    candidates.append((score, {**ev, "source": src.name, "via": "arxiv_lookup"}, cand))
+            except Exception as e:
+                evidence[f"{src.name}_arxiv_error"] = str(e)
+
     if not candidates:
         for src in sources:
             try:
