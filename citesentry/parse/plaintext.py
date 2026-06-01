@@ -331,11 +331,14 @@ def _parse_author_list(text: str) -> list[str]:
     text = text.strip().rstrip(".,")
     if not text:
         return []
-    parts = re.split(r"\s+and\s+|;\s*|,\s+(?=[A-Z])", text, flags=re.IGNORECASE)
+    # Split on ", " only before a Lastname (uppercase + lowercase letter), NOT before
+    # initials like "H.W." (uppercase + period) or "et al." (lowercase).
+    # This prevents "Chung, H.W." from splitting into ["Chung", "H.W"].
+    parts = re.split(r"\s+and\s+|;\s*|,\s+(?=[A-Z][a-z'\-])", text, flags=re.IGNORECASE)
     authors = []
     for p in parts:
         p = p.strip().rstrip(",.")
-        if p and len(p) > 1:
+        if p and len(p) > 1 and p.lower().replace(" ", "") not in ("etal", "etal.", "others"):
             authors.append(p)
     return authors[:10]
 

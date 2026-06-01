@@ -30,14 +30,27 @@ class Cache:
         h = hashlib.sha256(f"{namespace}:{identifier}".encode()).hexdigest()
         return h
 
+    # FAIL entries expire after 1 day; PASS/other entries expire after 30 days
+    _TTL_FAIL = 86_400
+    _TTL_PASS = 86_400 * 30
+
     def get(self, namespace: str, identifier: str) -> Any | None:
         key = self._key(namespace, identifier)
         row = self._conn.execute(
-            "SELECT value FROM cache WHERE key = ?", (key,)
+            "SELECT value, created_at FROM cache WHERE key = ?", (key,)
         ).fetchone()
         if row is None:
             return None
-        return json.loads(row[0])
+        value = json.loads(row[0])
+        created_at = row[1]
+        # Apply TTL: shorter for failures so stale NOT_FOUND results don't persist
+        is_fail = isinstance(value, dict) and value.get("status") in ("FAIL", "fail")
+        ttl = self._TTL_FAIL if is_fail else self._TTL_PASS
+        if time.time() - created_at > ttl:
+            self._conn.execute("DELETE FROM cache WHERE key = ?", (key,))
+            self._conn.commit()
+            return None
+        return value
 
     def set(self, namespace: str, identifier: str, value: Any) -> None:
         key = self._key(namespace, identifier)
