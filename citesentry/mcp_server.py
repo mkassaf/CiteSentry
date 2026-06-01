@@ -35,8 +35,24 @@ def _make_opts(check_url: bool, check_relevance: bool):
         sources=_build_sources(),
         llm_client=llm_client,
         use_cache=True,
-        domain_mode="auto",
+        domain_mode="auto",  # auto-enables DBLP, PubMed, Google Books per reference type
     )
+
+
+def _log_startup_config() -> None:
+    """Write a one-time config summary to stderr so users know what's active."""
+    from citesentry.config import get_settings
+    s = get_settings()
+    active = []
+    if s.semantic_scholar_api_key:
+        active.append("Semantic Scholar (keyed)")
+    else:
+        active.append("Semantic Scholar (anonymous — set SEMANTIC_SCHOLAR_API_KEY for higher limits)")
+    if s.google_books_api_key:
+        active.append("Google Books (keyed)")
+    if s.grobid_api_url:
+        active.append(f"GROBID at {s.grobid_api_url}")
+    sys.stderr.write("citesentry active sources: " + ", ".join(active) + "\n")
 
 
 @mcp.tool()
@@ -50,15 +66,19 @@ async def verify_reference(
 
     Checks: (1) existence in scholarly databases, (2) URL liveness, (3) content relevance.
 
+    Databases queried: OpenAlex, Crossref, Semantic Scholar, arXiv, DBLP (CS papers),
+    PubMed (biomedical), Google Books (textbooks). Set SEMANTIC_SCHOLAR_API_KEY and
+    GOOGLE_BOOKS_API_KEY in the MCP server env for higher rate limits.
+
     Returns a VerificationReport dict. overall_verdict values:
-    - VERIFIED: paper exists, metadata consistent, URLs live, content relevant
-    - METADATA_MISMATCH: paper exists but at least one field disagrees (possible LLM hallucination)
+    - VERIFIED: paper found in a scholarly database with matching metadata
+    - METADATA_MISMATCH: paper found but a field disagrees (year, authors, DOI)
     - DEAD_URL: paper may exist but a cited URL is not reachable
     - CONTENT_DRIFT: URL is live but content no longer matches the citation
-    - NOT_FOUND: could not verify in any database — needs manual review, do NOT label as fake
-    - UNRESOLVABLE: reference could not be parsed well enough to check
+    - NOT_FOUND: could not verify — needs manual review; NOT proof of fabrication
+    - UNRESOLVABLE: reference could not be parsed (missing title, DOI, authors)
 
-    Content relevance check requires DEEPSEEK_API_KEY env var; otherwise skipped.
+    Content relevance uses MCP sampling (no extra key needed in MCP mode).
     """
     from citesentry.parse.plaintext import extract_fields, Style
     from citesentry.core.engine import verify_one
@@ -146,9 +166,8 @@ async def check_url_alive(url: str) -> dict:
 
 
 def main() -> None:
-    import sys
-
     sys.stderr.write("citesentry MCP server starting (stdio transport)\n")
+    _log_startup_config()
     mcp.run(transport="stdio")
 
 
