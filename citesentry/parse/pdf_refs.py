@@ -17,11 +17,20 @@ _END_SECTION_RE = re.compile(
 
 
 def _extract_text(path: Path) -> str:
+    # PyMuPDF handles multi-column layouts and line order far better than pdfminer
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(str(path))
+        text = "\n".join(page.get_text() for page in doc)
+        doc.close()
+        return text
+    except ImportError:
+        pass
     try:
         from pdfminer.high_level import extract_text
         return extract_text(str(path))
     except ImportError as e:
-        raise ImportError("pdfminer.six is required: pip install pdfminer.six") from e
+        raise ImportError("Install pymupdf or pdfminer.six: pip install pymupdf") from e
 
 
 def _find_ref_section(text: str) -> str | None:

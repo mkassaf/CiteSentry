@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "citesentry"
-version = "0.3.1"
+version = "0.3.2"
 description = "Citation verification tool: existence, URL liveness, and content relevance checks"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,6 +20,7 @@ dependencies = [
     "pdfminer.six>=20221105",
     "mcp[cli]>=1.0",
     "platformdirs>=4",
+    "pymupdf>=1.27.2.3",
 ]
 
 [project.optional-dependencies]

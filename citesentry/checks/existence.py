@@ -163,7 +163,10 @@ async def check_existence(
             except Exception as e:
                 evidence[f"{src.name}_error"] = str(e)
 
-    if not candidates and domain_sources:
+    # Query domain sources when no good candidate found yet — this handles papers
+    # (e.g. ICML/ICLR proceedings) that Semantic Scholar misses but DBLP covers well.
+    best_score_so_far = max((c[0] for c in candidates), default=0.0)
+    if (not candidates or best_score_so_far < _TITLE_PASS_THRESHOLD / 100.0) and domain_sources:
         for src in domain_sources:
             try:
                 if effective_doi:
