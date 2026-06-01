@@ -10,6 +10,7 @@ from citesentry.core.cascade import VerifyOptions
 from citesentry.core.verdict import compute_verdict
 from citesentry.models import CheckStatus, Reference, VerificationReport
 from citesentry.sources.domain.dblp import DBLPAdapter, is_cs
+from citesentry.sources.domain.googlebooks import GoogleBooksAdapter, is_book
 from citesentry.sources.domain.pubmed import PubMedAdapter, is_biomedical
 
 
@@ -53,6 +54,8 @@ def _build_domain_sources(ref: Reference, opts: VerifyOptions) -> list:
             domain.append(PubMedAdapter())
         if is_cs(ref):
             domain.append(DBLPAdapter())
+        if is_book(ref):
+            domain.append(GoogleBooksAdapter())
 
     return domain
 

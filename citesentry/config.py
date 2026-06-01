@@ -26,6 +26,9 @@ class Settings:
     semantic_scholar_api_key: str | None = field(
         default_factory=lambda: os.getenv("SEMANTIC_SCHOLAR_API_KEY")
     )
+    google_books_api_key: str | None = field(
+        default_factory=lambda: os.getenv("GOOGLE_BOOKS_API_KEY")
+    )
 
     deepseek_api_key: str | None = field(
         default_factory=lambda: os.getenv("DEEPSEEK_API_KEY")
