@@ -47,7 +47,7 @@ def _find_ref_section(text: str) -> str | None:
     return None
 
 
-def parse_pdf_refs(path: Path, use_grobid: bool = True) -> list[Reference]:
+def parse_pdf_refs(path: Path, use_grobid: bool = True, llm_client: object | None = None) -> list[Reference]:
     if use_grobid:
         try:
             from citesentry.config import get_settings

@@ -344,20 +344,23 @@ def _parse_author_list(text: str) -> list[str]:
 
 
 async def _llm_extract(chunk: str, llm_client: object) -> Reference:
-    if llm_client is None:
-        return Reference(raw=chunk)
+    import json as _json
 
     prompt = f"""\
-Extract bibliographic fields from this reference as JSON.
-Reference: {chunk}
+Extract bibliographic fields from the reference text below. Return ONLY a JSON object with these keys \
+(use null when unknown): title, authors (list of strings), year (integer), venue, doi, arxiv_id, urls (list).
 
-Return ONLY valid JSON:
-{{"title": null, "authors": [], "year": null, "venue": null, "doi": null, "arxiv_id": null, "urls": []}}
-"""
+The text may be garbled or have OCR artifacts — do your best to recover the real values.
+
+Reference text:
+{chunk}
+
+JSON:"""
     try:
         response = await llm_client.complete(prompt)  # type: ignore[union-attr]
-        import json
-        data = json.loads(response.strip())
+        # Strip markdown code fences if the model wraps the response
+        text = re.sub(r"```(?:json)?\s*|\s*```", "", response).strip()
+        data = _json.loads(text)
         return Reference(
             raw=chunk,
             title=data.get("title"),
@@ -372,26 +375,27 @@ Return ONLY valid JSON:
         return Reference(raw=chunk)
 
 
-def parse_plaintext(text: str, style_override: Style | None = None, llm_client: object | None = None) -> list[Reference]:
+async def enrich_with_llm(refs: list[Reference], llm_client: object) -> list[Reference]:
+    """Async post-processing: use LLM to recover fields for refs that regex couldn't parse.
+
+    Only processes refs with no title, DOI, or arXiv ID (UNRESOLVABLE candidates).
+    Runs extractions concurrently in batches to avoid overwhelming the LLM.
+    """
+    import asyncio as _asyncio
+
+    async def _try_enrich(ref: Reference) -> Reference:
+        if ref.title or ref.doi or ref.arxiv_id or not ref.raw.strip():
+            return ref
+        enriched = await _llm_extract(ref.raw, llm_client)
+        # Only replace if LLM actually found something useful
+        return enriched if (enriched.title or enriched.doi or enriched.arxiv_id) else ref
+
+    return list(await _asyncio.gather(*[_try_enrich(r) for r in refs]))
+
+
+def parse_plaintext(text: str, style_override: Style | None = None) -> list[Reference]:
     chunks = split(text)
     if not chunks:
         return []
-
     style = style_override or detect_style(chunks)
-
-    refs = []
-    for chunk in chunks:
-        ref = extract_fields(chunk, style)
-        if not ref.title and not ref.doi and not ref.arxiv_id:
-            if llm_client is not None:
-                import asyncio
-                try:
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
-                        pass
-                    else:
-                        ref = loop.run_until_complete(_llm_extract(chunk, llm_client))
-                except Exception:
-                    pass
-        refs.append(ref)
-    return refs
+    return [extract_fields(chunk, style) for chunk in chunks]

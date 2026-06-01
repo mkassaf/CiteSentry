@@ -141,11 +141,24 @@ def check_cmd(
         err_console.print("[yellow]No references found in input.[/yellow]")
         raise typer.Exit(0)
 
-    console.print(f"[dim]Parsed {len(refs)} reference(s). Checking...[/dim]")
-
     opts = _make_options(no_llm, no_url, mailto, concurrency, no_cache, domain, model)
-    from citesentry.core.engine import verify_many
-    reports = asyncio.run(verify_many(refs, opts))
+
+    async def _run():
+        from citesentry.core.engine import verify_many
+        enriched = refs
+        if opts.llm_client is not None:
+            unresolvable = sum(1 for r in refs if not r.title and not r.doi and not r.arxiv_id)
+            if unresolvable:
+                err_console.print(
+                    f"[dim]{unresolvable} reference(s) unresolvable by regex — "
+                    f"using LLM to recover fields...[/dim]"
+                )
+                from citesentry.parse.plaintext import enrich_with_llm
+                enriched = await enrich_with_llm(refs, opts.llm_client)
+        return await verify_many(enriched, opts)
+
+    console.print(f"[dim]Parsed {len(refs)} reference(s). Checking...[/dim]")
+    reports = asyncio.run(_run())
 
     if format == "json":
         print(json.dumps([r.model_dump(mode="json") for r in reports], indent=2))
