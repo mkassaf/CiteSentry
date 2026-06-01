@@ -10,6 +10,11 @@ _HEADING_RE = re.compile(
     re.IGNORECASE,
 )
 
+_END_SECTION_RE = re.compile(
+    r"^\s*(appendix|about the authors?|acknowledgements?|acknowledgments?|author contributions?)\s*\.?\s*$",
+    re.IGNORECASE,
+)
+
 
 def _extract_text(path: Path) -> str:
     try:
@@ -23,16 +28,13 @@ def _find_ref_section(text: str) -> str | None:
     lines = text.splitlines()
     for i, line in enumerate(lines):
         if _HEADING_RE.match(line.strip()):
-            ref_lines = lines[i + 1 :]
-            next_heading = None
+            ref_lines = lines[i + 1:]
+            end = len(ref_lines)
             for j, rl in enumerate(ref_lines):
-                stripped = rl.strip()
-                if stripped and stripped.isupper() and len(stripped) > 5 and j > 10:
-                    next_heading = j
+                if j > 5 and _END_SECTION_RE.match(rl.strip()):
+                    end = j
                     break
-            if next_heading:
-                ref_lines = ref_lines[:next_heading]
-            return "\n".join(ref_lines)
+            return "\n".join(ref_lines[:end])
     return None
 
 

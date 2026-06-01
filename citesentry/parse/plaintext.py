@@ -13,7 +13,7 @@ _DOI_RE = re.compile(r"10\.\d{4,}/\S+")
 _URL_RE = re.compile(r"https?://[^\s,;>\"')]+")
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
-_NUMBERED_RE = re.compile(r"^\s*(\[?\d+\]?\.?\)?\s+|[¹²³⁴⁵⁶⁷⁸⁹⁰]+\s+)")
+_NUMBERED_RE = re.compile(r"^\s*(\[?\d{1,3}\]?\.?\)?\s+|[¹²³⁴⁵⁶⁷⁸⁹⁰]+\s+)")
 _AUTHOR_YEAR_RE = re.compile(
     r"^[A-Z][a-zA-ZÀ-ÿ\-\']+,?\s+([A-Z]\.?\s*)+(?:\d{4}|,)"
 )
@@ -25,6 +25,7 @@ class Style(str, Enum):
     VANCOUVER = "VANCOUVER"
     MLA = "MLA"
     CHICAGO = "CHICAGO"
+    LNCS = "LNCS"
     UNKNOWN = "UNKNOWN"
 
 
@@ -135,6 +136,8 @@ _APA_RE = re.compile(r"[A-Z][a-z]+,\s+[A-Z]\.\s+\(\d{4}\)")
 _VANCOUVER_RE = re.compile(r"\d{4};\d+[\s(]")
 _MLA_RE = re.compile(r'"[^"]+"\s+.*vol\.\s+\d+.*\(\d{4}\)')
 _CHICAGO_RE = re.compile(r"\(\w+:\s*\w+,\s*\d{4}\)")
+# LNCS/Springer: "Lastname, I., ...: Title. Venue (Year)"
+_LNCS_RE = re.compile(r'^[A-Z][a-zA-ZÀ-ÿ\-]+,\s+[A-Z]\.')
 
 
 def detect_style(chunks: list[str]) -> Style:
@@ -152,6 +155,8 @@ def detect_style(chunks: list[str]) -> Style:
             scores[Style.MLA] += 2
         if _CHICAGO_RE.search(chunk):
             scores[Style.CHICAGO] += 2
+        if _LNCS_RE.match(chunk) and ': ' in chunk:
+            scores[Style.LNCS] += 2
 
         # secondary signals
         if re.search(r'"[^"]{5,}"', chunk):
@@ -201,6 +206,12 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
         title, authors = _extract_apa(chunk)
     elif style == Style.VANCOUVER:
         title, authors = _extract_vancouver(chunk)
+    elif style == Style.LNCS:
+        title, authors = _extract_lncs(chunk)
+        if not title:
+            title, fallback_authors = _extract_generic(chunk)
+            if not authors:
+                authors = fallback_authors
     else:
         title, authors = _extract_generic(chunk)
 
@@ -250,10 +261,35 @@ def _extract_vancouver(chunk: str) -> tuple[str | None, list[str]]:
     return None, []
 
 
+def _extract_lncs(chunk: str) -> tuple[str | None, list[str]]:
+    """LNCS/Springer: 'Lastname, I., ...: Title. Venue (Year)'"""
+    idx = chunk.find(': ')
+    if idx < 0:
+        return None, []
+    authors_text = chunk[:idx]
+    rest = chunk[idx + 2:].strip()
+    # Verify the left side has at least one "Lastname, I." author pattern
+    if not re.search(r'[A-Z][a-z]+,\s+[A-Z]\.', authors_text):
+        return None, []
+    authors = _parse_author_list(authors_text)
+    # Title ends at the first ". " followed by an uppercase letter or "("
+    title_m = re.match(r'^(.+?)\.\s+(?=[A-Z(])', rest)
+    if title_m:
+        title = title_m.group(1).strip()
+    else:
+        title = rest.split('. ')[0].strip() or None
+    return title, authors
+
+
 def _extract_generic(chunk: str) -> tuple[str | None, list[str]]:
     m = re.search(r'"([^"]{10,})"', chunk)
     if m:
         return m.group(1), []
+
+    # Try LNCS/Springer colon-separated format as fallback
+    lncs_title, lncs_authors = _extract_lncs(chunk)
+    if lncs_title:
+        return lncs_title, lncs_authors
 
     sentences = re.split(r"(?<=[.!?])\s+", chunk)
     for sentence in sentences[1:3]:
