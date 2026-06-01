@@ -134,7 +134,8 @@ Add to your `claude_desktop_config.json`:
         "CITESENTRY_MAILTO": "you@example.com",
         "SEMANTIC_SCHOLAR_API_KEY": "your_s2_key",
         "GOOGLE_BOOKS_API_KEY": "your_google_key",
-        "DEEPSEEK_API_KEY": "sk-..."
+        "DEEPSEEK_API_KEY": "sk-...",
+        "OLLAMA_MODEL": "llama3.2"
       }
     }
   }
@@ -222,9 +223,11 @@ All API keys are **optional** — CiteSentry works without any keys but will hit
 | `SEMANTIC_SCHOLAR_API_KEY` | *(optional)* | Raises Semantic Scholar rate limit from ~1 req/s to 100 req/5s — see below |
 | `GOOGLE_BOOKS_API_KEY` | *(optional)* | Raises Google Books limit from ~1k req/day to 100k/day; used for textbook lookup |
 | `CITESENTRY_GROBID_URL` | *(optional)* | GROBID REST endpoint for high-quality PDF parsing; use `http://localhost:8070/api` for a local Docker instance |
-| `DEEPSEEK_API_KEY` | *(optional)* | Enables relevance checks in CLI; without it `--no-llm` is effectively applied |
-| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI-compatible endpoint |
-| `DEEPSEEK_MODEL` | `deepseek-chat` | Model for relevance judgments |
+| `DEEPSEEK_API_KEY` | *(optional)* | Enables relevance checks via DeepSeek; takes priority over Ollama if both are set |
+| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI-compatible endpoint for DeepSeek |
+| `DEEPSEEK_MODEL` | `deepseek-chat` | DeepSeek model name |
+| `OLLAMA_MODEL` | *(optional)* | Enables relevance checks via local Ollama (e.g. `llama3.2`, `mistral`); used when `DEEPSEEK_API_KEY` is not set |
+| `OLLAMA_BASE_URL` | `http://localhost:11434/v1` | Ollama OpenAI-compatible endpoint |
 
 ### Getting free API keys
 
@@ -232,6 +235,11 @@ All API keys are **optional** — CiteSentry works without any keys but will hit
 1. Go to **[semanticscholar.org/product/api#api-key](https://www.semanticscholar.org/product/api#api-key)**
 2. Fill in the form — free, approved within minutes
 3. Add to your shell profile: `export SEMANTIC_SCHOLAR_API_KEY=your_key`
+
+**Ollama** (free, local, no internet required):
+1. Install Ollama from [ollama.com](https://ollama.com) and pull a model: `ollama pull llama3.2`
+2. Set `export OLLAMA_MODEL=llama3.2` — CiteSentry will use it automatically when `DEEPSEEK_API_KEY` is not set
+3. Works with any model Ollama supports; `llama3.2` or `mistral` are good choices for relevance checking
 
 **Google Books** (recommended when references include textbooks):
 1. Go to [console.cloud.google.com](https://console.cloud.google.com)

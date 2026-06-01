@@ -40,6 +40,13 @@ class Settings:
         default_factory=lambda: os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
     )
 
+    ollama_base_url: str = field(
+        default_factory=lambda: os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+    )
+    ollama_model: str | None = field(
+        default_factory=lambda: os.getenv("OLLAMA_MODEL")
+    )
+
 
 _settings: Settings | None = None
 

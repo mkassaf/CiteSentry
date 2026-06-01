@@ -39,3 +39,23 @@ def make_deepseek_client() -> DeepSeekClient | None:
         base_url=s.deepseek_base_url,
         model=s.deepseek_model,
     )
+
+
+def make_llm_client():
+    """
+    Return the best available LLM client:
+    1. DeepSeek — if DEEPSEEK_API_KEY is set and openai package is installed
+    2. Ollama   — if OLLAMA_MODEL is set (runs locally, no key needed)
+    3. None     — LLM checks are skipped
+    """
+    try:
+        client = make_deepseek_client()
+        if client:
+            return client
+    except ImportError:
+        pass
+    try:
+        from citesentry.llm.ollama import make_ollama_client
+        return make_ollama_client()
+    except ImportError:
+        return None

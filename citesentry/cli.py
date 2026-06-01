@@ -36,6 +36,66 @@ def _build_sources():
     return [CrossrefAdapter(), OpenAlexAdapter(), SemanticScholarAdapter(), ArXivAdapter()]
 
 
+def _resolve_llm_client(
+    no_llm: bool,
+    llm: str | None,
+    llm_model: str | None,
+    llm_url: str | None,
+):
+    """
+    Build the LLM client from explicit flags, falling back to env-var auto-detection.
+
+    --llm none        → disabled
+    --llm deepseek    → force DeepSeek (needs DEEPSEEK_API_KEY)
+    --llm ollama      → force Ollama (needs OLLAMA_MODEL or --llm-model)
+    (default)         → auto: DeepSeek if key set, else Ollama if model set, else None
+    """
+    if no_llm or llm == "none":
+        return None
+
+    provider = (llm or "auto").lower()
+
+    if provider in ("deepseek", "auto"):
+        try:
+            from citesentry.llm.deepseek import make_deepseek_client
+            from citesentry.config import get_settings
+            s = get_settings()
+            # Allow --llm-model to override the model name for DeepSeek
+            if llm_model and provider == "deepseek":
+                from citesentry.llm.deepseek import DeepSeekClient
+                if s.deepseek_api_key:
+                    client = DeepSeekClient(s.deepseek_api_key, llm_url or s.deepseek_base_url, llm_model)
+                    return client
+            client = make_deepseek_client()
+            if client:
+                return client
+        except ImportError:
+            pass
+        if provider == "deepseek":
+            err_console.print(
+                "[yellow]--llm deepseek: DEEPSEEK_API_KEY not set or openai package missing.[/yellow]"
+            )
+            return None
+
+    if provider in ("ollama", "auto"):
+        try:
+            from citesentry.llm.ollama import OllamaClient, make_ollama_client
+            from citesentry.config import get_settings
+            s = get_settings()
+            model = llm_model or s.ollama_model
+            if model:
+                url = llm_url or s.ollama_base_url
+                return OllamaClient(base_url=url, model=model)
+            if provider == "ollama":
+                err_console.print(
+                    "[yellow]--llm ollama: set --llm-model or OLLAMA_MODEL env var.[/yellow]"
+                )
+        except ImportError:
+            pass
+
+    return None
+
+
 def _make_options(
     no_llm: bool,
     no_url: bool,
@@ -44,6 +104,9 @@ def _make_options(
     no_cache: bool,
     domain: str,
     model: str | None,
+    llm: str | None = None,
+    llm_model: str | None = None,
+    llm_url: str | None = None,
 ):
     from citesentry.core.cascade import VerifyOptions
     from citesentry.config import get_settings
@@ -52,14 +115,11 @@ def _make_options(
         settings = get_settings()
         settings.mailto = mailto
 
-    llm_client = None
-    if not no_llm:
-        from citesentry.llm.deepseek import make_deepseek_client
-        llm_client = make_deepseek_client()
+    llm_client = _resolve_llm_client(no_llm, llm, llm_model, llm_url)
 
     return VerifyOptions(
         check_url=not no_url,
-        check_relevance=not no_llm,
+        check_relevance=not no_llm and llm_client is not None,
         use_cache=not no_cache,
         sources=_build_sources(),
         llm_client=llm_client,
@@ -121,7 +181,10 @@ def check_cmd(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, json, md"),
     no_llm: bool = typer.Option(False, "--no-llm", help="Skip LLM relevance check"),
     no_url: bool = typer.Option(False, "--no-url", help="Skip URL liveness check"),
-    model: Optional[str] = typer.Option(None, "--model", help="Override LLM model"),
+    llm: Optional[str] = typer.Option(None, "--llm", help="LLM provider: auto, deepseek, ollama, none"),
+    llm_model: Optional[str] = typer.Option(None, "--llm-model", help="Override model name (e.g. llama3.2, deepseek-chat)"),
+    llm_url: Optional[str] = typer.Option(None, "--llm-url", help="Override LLM base URL (e.g. http://localhost:11434/v1)"),
+    model: Optional[str] = typer.Option(None, "--model", help="Alias for --llm-model (deprecated)", hidden=True),
     mailto: Optional[str] = typer.Option(None, "--mailto", help="Email for API politeness"),
     concurrency: int = typer.Option(8, "--concurrency", "-c", help="Max concurrent checks"),
     no_cache: bool = typer.Option(False, "--no-cache", help="Disable SQLite cache"),
@@ -141,7 +204,7 @@ def check_cmd(
         err_console.print("[yellow]No references found in input.[/yellow]")
         raise typer.Exit(0)
 
-    opts = _make_options(no_llm, no_url, mailto, concurrency, no_cache, domain, model)
+    opts = _make_options(no_llm, no_url, mailto, concurrency, no_cache, domain, model or llm_model, llm, llm_model or model, llm_url)
 
     async def _run():
         from citesentry.core.engine import verify_many
@@ -178,16 +241,19 @@ def check_one_cmd(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, json, md"),
     no_llm: bool = typer.Option(False, "--no-llm"),
     no_url: bool = typer.Option(False, "--no-url"),
+    llm: Optional[str] = typer.Option(None, "--llm", help="LLM provider: auto, deepseek, ollama, none"),
+    llm_model: Optional[str] = typer.Option(None, "--llm-model", help="Override model name"),
+    llm_url: Optional[str] = typer.Option(None, "--llm-url", help="Override LLM base URL"),
     mailto: Optional[str] = typer.Option(None, "--mailto"),
     no_cache: bool = typer.Option(False, "--no-cache"),
     domain: str = typer.Option("auto", "--domain"),
 ):
     """Verify a single raw reference string."""
-    from citesentry.parse.plaintext import extract_fields, detect_style, Style
+    from citesentry.parse.plaintext import extract_fields, Style
 
     ref = extract_fields(reference, Style.UNKNOWN)
 
-    opts = _make_options(no_llm, no_url, mailto, 1, no_cache, domain, None)
+    opts = _make_options(no_llm, no_url, mailto, 1, no_cache, domain, None, llm, llm_model, llm_url)
     from citesentry.core.engine import verify_one
     report = asyncio.run(verify_one(ref, opts))
 
