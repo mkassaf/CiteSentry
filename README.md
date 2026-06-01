@@ -214,27 +214,29 @@ asyncio.run(main())
 
 ## Environment variables
 
+All API keys are **optional** — CiteSentry works without any keys but will hit anonymous rate limits faster when checking large reference lists.
+
 | Variable | Default | Description |
 |---|---|---|
 | `CITESENTRY_MAILTO` | `citesentry@example.com` | Polite email for OpenAlex/Crossref API (strongly recommended) |
-| `SEMANTIC_SCHOLAR_API_KEY` | — | Free key from [semanticscholar.org/product/api](https://www.semanticscholar.org/product/api) — raises rate limit from ~1 req/s to 100 req/5s |
-| `GOOGLE_BOOKS_API_KEY` | — | Free key from [Google Cloud Console](https://console.cloud.google.com) — raises limit from ~1k/day to 100k/day; used for textbook lookup |
-| `CITESENTRY_GROBID_URL` | `https://kermitt2-grobid.hf.space/api` | GROBID REST endpoint for high-quality PDF parsing; use `http://localhost:8070/api` for a local Docker instance |
-| `DEEPSEEK_API_KEY` | — | Required for relevance checks in CLI (`--no-llm` skips this) |
+| `SEMANTIC_SCHOLAR_API_KEY` | *(optional)* | Raises Semantic Scholar rate limit from ~1 req/s to 100 req/5s — see below |
+| `GOOGLE_BOOKS_API_KEY` | *(optional)* | Raises Google Books limit from ~1k req/day to 100k/day; used for textbook lookup |
+| `CITESENTRY_GROBID_URL` | *(optional)* | GROBID REST endpoint for high-quality PDF parsing; use `http://localhost:8070/api` for a local Docker instance |
+| `DEEPSEEK_API_KEY` | *(optional)* | Enables relevance checks in CLI; without it `--no-llm` is effectively applied |
 | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI-compatible endpoint |
 | `DEEPSEEK_MODEL` | `deepseek-chat` | Model for relevance judgments |
 
 ### Getting free API keys
 
-**Semantic Scholar** (recommended — greatly improves reliability):
-1. Go to [semanticscholar.org/product/api](https://www.semanticscholar.org/product/api)
-2. Click "Get API Key" — free, instant approval
-3. Set `SEMANTIC_SCHOLAR_API_KEY=your_key`
+**Semantic Scholar** (recommended — significantly improves reliability for large reference lists):
+1. Go to **[semanticscholar.org/product/api#api-key](https://www.semanticscholar.org/product/api#api-key)**
+2. Fill in the form — free, approved within minutes
+3. Add to your shell profile: `export SEMANTIC_SCHOLAR_API_KEY=your_key`
 
-**Google Books** (recommended for papers citing textbooks):
+**Google Books** (recommended when references include textbooks):
 1. Go to [console.cloud.google.com](https://console.cloud.google.com)
-2. Enable the Books API, create an API key
-3. Set `GOOGLE_BOOKS_API_KEY=your_key`
+2. Enable the "Books API" and create an API key
+3. Add to your shell profile: `export GOOGLE_BOOKS_API_KEY=your_key`
 
 ## Supported input formats
 
