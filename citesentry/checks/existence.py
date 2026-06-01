@@ -110,7 +110,7 @@ async def check_existence(
     if use_cache:
         from citesentry.cache import get_cache
         cache = get_cache()
-        cache_key = ref.doi or (f"{ref.title}|{ref.year}" if ref.title else None)
+        cache_key = ref.doi or ref.arxiv_id or (f"{ref.title}|{ref.year}" if ref.title else None)
         if cache_key:
             cached = cache.get("existence", cache_key)
             if cached is not None:
@@ -239,7 +239,7 @@ async def check_existence(
     if use_cache:
         from citesentry.cache import get_cache
         cache = get_cache()
-        cache_key = ref.doi or (f"{ref.title}|{ref.year}" if ref.title else None)
+        cache_key = ref.doi or ref.arxiv_id or (f"{ref.title}|{ref.year}" if ref.title else None)
         if cache_key:
             cache.set("existence", cache_key, {
                 "status": result.status.value,

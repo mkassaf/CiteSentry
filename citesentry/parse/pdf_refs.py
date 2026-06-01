@@ -38,12 +38,22 @@ def _find_ref_section(text: str) -> str | None:
     return None
 
 
-def parse_pdf_refs(path: Path) -> list[Reference]:
-    from citesentry.parse.plaintext import parse_plaintext
+def parse_pdf_refs(path: Path, use_grobid: bool = True) -> list[Reference]:
+    if use_grobid:
+        try:
+            from citesentry.config import get_settings
+            from citesentry.parse.grobid import parse_pdf_via_grobid
+            api_url = get_settings().grobid_api_url
+            if api_url:
+                refs = parse_pdf_via_grobid(path, api_url=api_url)
+                if refs:
+                    return refs
+        except Exception:
+            pass
 
+    from citesentry.parse.plaintext import parse_plaintext
     text = _extract_text(path)
     ref_section = _find_ref_section(text)
     if ref_section is None:
         ref_section = text
-
     return parse_plaintext(ref_section)

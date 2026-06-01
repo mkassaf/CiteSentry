@@ -180,6 +180,9 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
 
     urls = [u.rstrip(".,;)>\"'") for u in _URL_RE.findall(chunk)]
     urls = [u for u in urls if "doi.org" not in u]
+    # Drop truncated URLs that have no meaningful path (e.g. "https://arxiv" from pdfminer line breaks)
+    from urllib.parse import urlparse
+    urls = [u for u in urls if urlparse(u).path.rstrip("/")]
 
     arxiv_id = None
     for u in urls + [chunk]:
@@ -191,6 +194,11 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
         m3 = re.search(r"\barXiv:\s*(\d{4}\.\d+)", chunk, re.IGNORECASE)
         if m3:
             arxiv_id = m3.group(1)
+    # Recover arXiv ID from pdfminer-broken URLs like "arxiv. org/abs/2308.07201"
+    if not arxiv_id:
+        m4 = re.search(r'arxiv[.\s]+org/abs/([^\s,;)]+)', chunk, re.IGNORECASE)
+        if m4:
+            arxiv_id = m4.group(1).strip()
 
     year = None
     ym = _YEAR_RE.search(chunk)

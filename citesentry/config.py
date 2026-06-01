@@ -20,6 +20,10 @@ class Settings:
     concurrency: int = 8
     politeness_delay: float = 0.5
 
+    grobid_api_url: str | None = field(
+        default_factory=lambda: os.getenv("CITESENTRY_GROBID_URL", "https://kermitt2-grobid.hf.space/api")
+    )
+
     deepseek_api_key: str | None = field(
         default_factory=lambda: os.getenv("DEEPSEEK_API_KEY")
     )
