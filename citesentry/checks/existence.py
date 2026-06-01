@@ -51,6 +51,14 @@ def _year_score(ref_year: int | None, cand_year: int | None) -> float:
 def _score_candidate(ref: Reference, cand: Candidate) -> tuple[float, dict[str, Any]]:
     evidence: dict[str, Any] = {}
 
+    # Exact identifier match is definitive — no fuzzy comparison needed
+    if ref.arxiv_id and cand.arxiv_id and ref.arxiv_id == cand.arxiv_id:
+        evidence.update({"title_score": 1.0, "exact_arxiv_match": True, "composite": 1.0})
+        return 1.0, evidence
+    if ref.doi and cand.doi and ref.doi.lower().rstrip("/") == cand.doi.lower().rstrip("/"):
+        evidence.update({"title_score": 1.0, "exact_doi_match": True, "composite": 1.0})
+        return 1.0, evidence
+
     title_score = 0.0
     if ref.title and cand.title:
         title_score = fuzz.token_set_ratio(ref.title.lower(), cand.title.lower()) / 100.0

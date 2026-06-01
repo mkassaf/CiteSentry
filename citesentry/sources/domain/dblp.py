@@ -11,9 +11,14 @@ from citesentry.sources.base import SourceAdapter
 _BASE = "https://dblp.org/search/publ/api"
 
 _CS_PATTERNS = [
-    # ML / AI
+    # ML / AI — abbreviations and unambiguous full-name fragments
     "neurips", "nips", "icml", "cvpr", "iccv", "eccv", "acl", "emnlp", "naacl",
     "iclr", "aaai", "ijcai", "uai", "aistats",
+    "pmlr",                              # Proceedings of Machine Learning Research (ICML, AISTATS, …)
+    "conference on learning representations",  # ICLR full name
+    "conference on machine learning",    # ICML full name fragment
+    "neural information processing",     # NeurIPS full name fragment
+    "empirical methods in natural language",  # EMNLP
     # Data / DB
     "vldb", "sigmod", "sigkdd", "kdd", "icde", "www", "iswc",
     # Systems
@@ -37,8 +42,10 @@ _CS_PATTERNS = [
 def is_cs(ref: Reference) -> bool:
     if ref.arxiv_id:
         return True
-    venue = (ref.venue or "").lower()
-    return any(p in venue for p in _CS_PATTERNS)
+    # Check both extracted venue and raw reference text (venue abbreviations like
+    # "ICML" rarely appear in the extracted venue field for LNCS-formatted papers)
+    text = " ".join(filter(None, [ref.venue, ref.raw])).lower()
+    return any(p in text for p in _CS_PATTERNS)
 
 
 def _hit_to_candidate(hit: dict) -> Candidate:

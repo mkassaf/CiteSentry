@@ -207,6 +207,7 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
 
     title = None
     authors: list[str] = []
+    venue = None
 
     if style == Style.IEEE:
         title, authors = _extract_ieee(chunk)
@@ -215,7 +216,7 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
     elif style == Style.VANCOUVER:
         title, authors = _extract_vancouver(chunk)
     elif style == Style.LNCS:
-        title, authors = _extract_lncs(chunk)
+        title, authors, venue = _extract_lncs(chunk)
         if not title:
             title, fallback_authors = _extract_generic(chunk)
             if not authors:
@@ -228,6 +229,7 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
         title=title,
         authors=authors,
         year=year,
+        venue=venue,
         doi=doi,
         arxiv_id=arxiv_id,
         urls=urls,
@@ -269,24 +271,40 @@ def _extract_vancouver(chunk: str) -> tuple[str | None, list[str]]:
     return None, []
 
 
-def _extract_lncs(chunk: str) -> tuple[str | None, list[str]]:
-    """LNCS/Springer: 'Lastname, I., ...: Title. Venue (Year)'"""
+def _extract_lncs(chunk: str) -> tuple[str | None, list[str], str | None]:
+    """LNCS/Springer: 'Lastname, I., ...: Title. Venue (Year)'
+    Returns (title, authors, venue).
+    """
     idx = chunk.find(': ')
     if idx < 0:
-        return None, []
+        return None, [], None
     authors_text = chunk[:idx]
     rest = chunk[idx + 2:].strip()
     # Verify the left side has at least one "Lastname, I." author pattern
     if not re.search(r'[A-Z][a-z]+,\s+[A-Z]\.', authors_text):
-        return None, []
+        return None, [], None
     authors = _parse_author_list(authors_text)
+
     # Title ends at the first ". " followed by an uppercase letter or "("
     title_m = re.match(r'^(.+?)\.\s+(?=[A-Z(])', rest)
     if title_m:
-        title = title_m.group(1).strip()
+        raw_title = title_m.group(1).strip()
+        # Venue is everything after the title period up to the year "(YYYY)"
+        after_title = rest[title_m.end():].strip()
+        venue_m = re.match(r'^(?:In:\s*)?(.+?)(?:\.\s*(?:pp\.\s*[\d–-]+|vol\.\s*\d)|\s*\(\d{4}\)|$)', after_title, re.IGNORECASE)
+        venue = venue_m.group(1).strip().rstrip('.,').strip() if venue_m else None
     else:
-        title = rest.split('. ')[0].strip() or None
-    return title, authors
+        raw_title = rest.split('. ')[0].strip() or None
+        venue = None
+
+    # Clean up title artifacts left by pdfminer
+    title = raw_title
+    if title:
+        title = re.sub(r'\s*\(\d{4}\),?\s*$', '', title).strip()  # trailing "(2025)"
+        title = re.sub(r',?\s*https?://\S+', '', title).strip()    # trailing/embedded URLs
+        title = title.rstrip('.,').strip() or None
+
+    return title, authors, venue
 
 
 def _extract_generic(chunk: str) -> tuple[str | None, list[str]]:
@@ -295,7 +313,7 @@ def _extract_generic(chunk: str) -> tuple[str | None, list[str]]:
         return m.group(1), []
 
     # Try LNCS/Springer colon-separated format as fallback
-    lncs_title, lncs_authors = _extract_lncs(chunk)
+    lncs_title, lncs_authors, _venue = _extract_lncs(chunk)
     if lncs_title:
         return lncs_title, lncs_authors
 
