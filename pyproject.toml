@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "citesentry"
-version = "0.4.1"
+version = "0.5.0"
 description = "Citation verification tool: existence, URL liveness, and content relevance checks"
 readme = "README.md"
 requires-python = ">=3.10"
