@@ -128,12 +128,14 @@ When GROBID is available, it is used as the primary extractor. PyMuPDF is the fa
 It's opt-in: `marker-pdf` pulls in PyTorch and several GB of layout/OCR models, and conversion is much slower than PyMuPDF (seconds to minutes per PDF, especially on CPU), so it's never enabled just because the package happens to be installed.
 
 ```bash
-pip install citesentry[marker]
+pip install "citesentry[marker]"
 export CITESENTRY_USE_MARKER=1
 citesentry check paper.pdf
 ```
 
 When enabled, marker is tried first within the text-extraction fallback path (i.e. after GROBID, before PyMuPDF). If marker isn't installed or conversion fails, CiteSentry silently falls back to PyMuPDF → pypdf → pdfminer as usual.
+
+For the MCP server, `export CITESENTRY_USE_MARKER=1` in your shell isn't enough — Claude Desktop spawns `citesentry-mcp` itself and doesn't inherit your shell's environment, so the variable must go in the server's own `env` block (see below). The `marker-pdf` package also needs to be installed into whichever Python environment actually provides the `citesentry-mcp` command, not just the one you ran `pip install` in.
 
 ## MCP server (Claude Desktop / Claude Code)
 
@@ -149,7 +151,8 @@ Add to your `claude_desktop_config.json`:
         "SEMANTIC_SCHOLAR_API_KEY": "your_s2_key",
         "GOOGLE_BOOKS_API_KEY": "your_google_key",
         "DEEPSEEK_API_KEY": "sk-...",
-        "OLLAMA_MODEL": "llama3.2"
+        "OLLAMA_MODEL": "llama3.2",
+        "CITESENTRY_USE_MARKER": "1"
       }
     }
   }
@@ -237,7 +240,7 @@ All API keys are **optional** — CiteSentry works without any keys but will hit
 | `SEMANTIC_SCHOLAR_API_KEY` | *(optional)* | Raises Semantic Scholar rate limit from ~1 req/s to 100 req/5s — see below |
 | `GOOGLE_BOOKS_API_KEY` | *(optional)* | Raises Google Books limit from ~1k req/day to 100k/day; used for textbook lookup |
 | `CITESENTRY_GROBID_URL` | *(optional)* | GROBID REST endpoint for high-quality PDF parsing; use `http://localhost:8070/api` for a local Docker instance |
-| `CITESENTRY_USE_MARKER` | *(optional)* | Set to `1`/`true` to use [marker](https://github.com/datalab-to/marker) (PDF→Markdown via layout/OCR models) for PDF text extraction; requires `pip install citesentry[marker]` |
+| `CITESENTRY_USE_MARKER` | *(optional)* | Set to `1`/`true` to use [marker](https://github.com/datalab-to/marker) (PDF→Markdown via layout/OCR models) for PDF text extraction; requires `pip install "citesentry[marker]"` |
 | `DEEPSEEK_API_KEY` | *(optional)* | Enables relevance checks via DeepSeek; takes priority over Ollama if both are set |
 | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI-compatible endpoint for DeepSeek |
 | `DEEPSEEK_MODEL` | `deepseek-chat` | DeepSeek model name |
