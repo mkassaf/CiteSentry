@@ -39,6 +39,12 @@ _BIB_HEADER_PATTERNS = [
     ),
 ]
 
+# Markdown heading markers (from marker's PDF->Markdown output, e.g. "## References").
+# Stripped before heading-pattern matching so marker's output is handled the same
+# way as plain extracted text, instead of duplicating every pattern above with a
+# leading "#*" alternative.
+_MD_HEADING_RE = re.compile(r'^[ \t]{0,3}#{1,6}[ \t]+', re.MULTILINE)
+
 # Sections that mark the end of a bibliography
 _END_SECTION_RE = re.compile(
     r'^\s*(?:'
@@ -60,9 +66,20 @@ _END_SECTION_RE = re.compile(
 
 def _extract_text(path: Path) -> str:
     """
-    Extract full text from a PDF. Tries three backends in order:
+    Extract full text from a PDF.
+
+    If CITESENTRY_USE_MARKER is set, tries marker (PDF -> Markdown) first for
+    better layout/heading fidelity on hard documents. Otherwise (or if marker
+    isn't installed / fails) falls back to three backends in order:
     PyMuPDF (best multi-column support) → pypdf → pdfminer.
     """
+    from citesentry.config import get_settings
+    if get_settings().use_marker:
+        from citesentry.parse.marker_pdf import convert_pdf_to_markdown
+        text = convert_pdf_to_markdown(path)
+        if text:
+            return text
+
     # 1. PyMuPDF
     try:
         import fitz  # PyMuPDF
@@ -163,6 +180,7 @@ def parse_pdf_refs(path: Path, use_grobid: bool = True, llm_client: object | Non
 
     from citesentry.parse.plaintext import parse_plaintext
     text = _extract_text(path)
+    text = _MD_HEADING_RE.sub('', text)
     ref_section = _find_ref_section(text)
     if ref_section is None:
         ref_section = text

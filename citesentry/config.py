@@ -23,6 +23,10 @@ class Settings:
     grobid_api_url: str | None = field(
         default_factory=lambda: os.getenv("CITESENTRY_GROBID_URL", "https://kermitt2-grobid.hf.space/api")
     )
+    use_marker: bool = field(
+        default_factory=lambda: os.getenv("CITESENTRY_USE_MARKER", "").lower()
+        in ("1", "true", "yes")
+    )
     semantic_scholar_api_key: str | None = field(
         default_factory=lambda: os.getenv("SEMANTIC_SCHOLAR_API_KEY")
     )

@@ -25,6 +25,7 @@ dependencies = [
 
 [project.optional-dependencies]
 pdf = ["refextract"]
+marker = ["marker-pdf"]
 cli-llm = ["openai>=1.0"]
 domain = []
 dev = [
